@@ -95,7 +95,7 @@ Plot histograms of all the quantitative variables in a **single plot** [^footnot
 ```{R}
 new_df <-
   df %>%
-  select(2:8) %>%
+  select(!sex) %>%
   gather(cols, value)
   
 plt <- 
@@ -222,8 +222,15 @@ Implement the following in a **single command**:
 3. Use the `geom_tile()` function to create a tile plot of `num_rings` vs `sex` with the color indicating of each tile indicating the `avg_weight` value. 
 
 
-```R
-df %>% ... # Insert your code here
+```{R}
+df %>% 
+  mutate(num_rings = ifelse(rings < 10, "low",
+                            ifelse(rings > 20, "high", "med"))) %>%
+  group_by(num_rings, sex) %>%
+  summarize("avg_weight" = mean(whole_weight + shucked_weight + viscera_weight + shell_weight)) %>%
+  ggplot(aes(x=num_rings, y=sex)) +
+  geom_tile(aes(fill=avg_weight))
+           
 ```
 
 
@@ -252,8 +259,24 @@ Use the `map2()` function from the `purrr` package to create a scatter plot for 
 :::
 
 
-```R
-... # Insert your code here
+```{R}
+df_quant <-
+  df %>%
+  select(!sex)
+df_quant
+
+df_y <-
+  df %>%
+  select(rings)
+df_y
+
+plot1 <- map2(df_quant, df_y, ~ ggplot(df) +
+  geom_point(aes(x=rings, y=.x, color=sex)) +
+  xlab("yo"))
+plot1
+
+cowplot::plot_grid(test)
+
 ```
 
 
