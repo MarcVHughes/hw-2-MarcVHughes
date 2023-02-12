@@ -51,7 +51,7 @@ EDA using `readr`, `tidyr` and `ggplot2`
 
 Load the "Abalone" dataset as a tibble called `abalone` using the URL provided below. The `abalone_col_names` variable contains a vector of the column names for this dataset (to be consistent with the R naming pattern). Make sure you read the dataset with the provided column names. 
 
-```R
+```{R}
 library(readr)
 url <- "http://archive.ics.uci.edu/ml/machine-learning-databases/abalone/abalone.data"
 
@@ -67,7 +67,7 @@ abalone_col_names <- c(
   "rings"
 )
 
-abalone <- ... # Insert your code here
+abalone <- read_csv(url, col_names = abalone_col_names)
 ```
 
 ---
@@ -76,10 +76,13 @@ abalone <- ... # Insert your code here
 
 Remove missing values and `NA`s from the dataset and store the cleaned data in a tibble called `df`. How many rows were dropped?
 
-```R
-df <- ... # Insert your code here
+```{R}
+abalone
+df <- drop_na(abalone)
+df
 ```
 
+No rows were dropped from the dataset.
 
 
 
@@ -89,8 +92,17 @@ df <- ... # Insert your code here
 
 Plot histograms of all the quantitative variables in a **single plot** [^footnote_facet_wrap]
 
-```R
-... # Insert your code here
+```{R}
+new_df <-
+  df %>%
+  select(2:8) %>%
+  gather(cols, value)
+  
+plt <- 
+  ggplot(new_df, aes(x = value)) +
+  geom_histogram() +
+  facet_wrap(~cols)
+plt
 ```
 
 
@@ -100,14 +112,23 @@ Plot histograms of all the quantitative variables in a **single plot** [^footnot
 
 Create a boxplot of `length` for each `sex` and create a violin-plot of of `diameter` for each `sex`. Are there any notable differences in the physical appearences of abalones based on your analysis here?
 
-```R
-... # Insert your code for boxplot here
+```{R}
+box_plt <- 
+  ggplot(df, aes(x=sex, y=length)) +
+  geom_boxplot()
+box_plt
+
 ```
 
-```R
-... # Insert your code for violinplot here
+```{R}
+violin_plt <-
+  ggplot(df, aes(x=sex, y=diameter)) +
+  geom_violin()
+violin_plt
+
 ```
 
+It would seem that the abalones of 'sex' "I" are significantly shorter in both 'diameter' and 'length' than those of 'sex' "M" and "F". In addition to this, the abalones of 'sex' "F" generally have a larger diameter than the other sexes.
 
 ---
 
@@ -117,9 +138,14 @@ Create a scatter plot of `length` and `diameter`, and modify the shape and color
 
 
 
-```R
-... # Insert your code here
+```{R}
+scatter_plt <- 
+  ggplot(df, aes(x=length, y=diameter)) +
+  geom_point(aes(shape=sex, color=sex, size=shell_weight))
+scatter_plt
 ```
+
+The plot created above shows that as 'length' increases so too does 'diameter'. When it comes to any notable anomalies that are displayed by the plot, a few come to mind. For example, there is an outlier abalone of 'sex' "I" represented by a triangle that is far larger in 'diameter' than other abalones of proportional 'length'. In addition to this, it has become evident that abalones of 'sex' "M" have a much more diverse size range than those of 'sex' "F". In other words, male abalones can be much smaller than female abalones while still growing relatively large in line with the average size of females.
 
 ---
 
@@ -128,8 +154,13 @@ Create a scatter plot of `length` and `diameter`, and modify the shape and color
 For each `sex`, create separate scatter plots of `length` and `diameter`. For each plot, also add a **linear** trendline to illustrate the relationship between the variables. Use the `facet_wrap()` function in R for this, and ensure that the plots are vertically stacked **not** horizontally. You should end up with a plot that looks like this: [^footnote_plot_facet]
 
 
-```R
-... # Insert your code here
+```{R}
+abalone_plt <-
+  ggplot(df, aes(x=length, y=diameter)) +
+  geom_point(aes(color=sex)) +
+  geom_smooth() +
+  facet_wrap(vars(sex), dir="v")
+abalone_plt
 ```
 
 
@@ -154,8 +185,23 @@ More advanced analyses using `dplyr`, `purrrr` and `ggplot2`
 Filter the data to only include abalone with a length of at least $0.5$ meters. Group the data by `sex` and calculate the mean of each variable for each group. Create a bar plot to visualize the mean values for each variable by `sex`.
 
 
-```R
-df %>% ... # Insert your code here
+```{R}
+glyph_ready_df <-
+  df %>% 
+  group_by(sex) %>%
+  summarize(across(everything(),mean)) %>%
+  filter("length" >= 0.5) %>%
+  rename("shell_wt" = shell_weight,
+         "shucked_wt" = shucked_weight,
+         "viscera_wt" = viscera_weight,
+         "whole_wt" = whole_weight) %>%
+  pivot_longer(!sex,
+               names_to = "Variables",
+               values_to = "Mean")
+
+ggplot(glyph_ready_df, aes(x=Mean, y=Variables)) +
+  geom_bar(stat="identity", aes(fill=sex)) +
+  facet_wrap(vars(sex), dir="v")
 ```
 
 
