@@ -4,8 +4,8 @@ author: "[Marc Hughes]{style='background-color: yellow;'}"
 toc: true
 title-block-banner: true
 title-block-style: default
-format: html
-# format: pdf
+# format: html
+format: pdf
 ---
 
 [Link to the Github repository](https://github.com/psu-stat380/hw-2)
@@ -96,12 +96,13 @@ Plot histograms of all the quantitative variables in a **single plot** [^footnot
 new_df <-
   df %>%
   select(!sex) %>%
+  # using gather function to gather all variables into one column
   gather(cols, value)
   
 plt <- 
   ggplot(new_df, aes(x = value)) +
   geom_histogram() +
-  facet_wrap(~cols)
+  facet_wrap(~cols, scales="free")
 plt
 ```
 
@@ -158,7 +159,7 @@ For each `sex`, create separate scatter plots of `length` and `diameter`. For ea
 abalone_plt <-
   ggplot(df, aes(x=length, y=diameter)) +
   geom_point(aes(color=sex)) +
-  geom_smooth() +
+  geom_smooth(method = "lm") +
   facet_wrap(vars(sex), dir="v")
 abalone_plt
 ```
@@ -191,10 +192,12 @@ glyph_ready_df <-
   group_by(sex) %>%
   summarize(across(everything(),mean)) %>%
   filter("length" >= 0.5) %>%
+  # renaming just to make cleaner
   rename("shell_wt" = shell_weight,
          "shucked_wt" = shucked_weight,
          "viscera_wt" = viscera_weight,
          "whole_wt" = whole_weight) %>%
+  # using pivot longer to put all variables into one column
   pivot_longer(!sex,
                names_to = "Variables",
                values_to = "Mean")
@@ -242,8 +245,14 @@ df %>%
 Make a table of the pairwise correlations between all the numeric variables rounded to 2 decimal points. Your final answer should look like this [^footnote_table]
 
 
-```R
-df %>% ... # Insert your code here
+```{R}
+# creating new data frames with only numeric variables
+df2 <- df %>%
+  select(!sex)
+
+# assigning variable of pairwise correlations
+pair.cor <- round(cor(df2), 2)
+pair.cor
 ```
 
 
@@ -260,22 +269,23 @@ Use the `map2()` function from the `purrr` package to create a scatter plot for 
 
 
 ```{R}
+# creating data frame with all quantitative variables
 df_quant <-
   df %>%
   select(!sex)
-df_quant
 
+# creating data frame with only rings variable
 df_y <-
   df %>%
   select(rings)
-df_y
 
+# using 'map2()' function to make a plot of every quantitative variable vs rings
 plot1 <- map2(df_quant, df_y, ~ ggplot(df) +
   geom_point(aes(x=rings, y=.x, color=sex)) +
-  xlab("yo"))
-plot1
+  labs(x = "rings", y = " "))
 
-cowplot::plot_grid(test)
+# using 'plot_grid()' to put all plots into one grid
+cowplot::plot_grid(plotlist = plot1, labels = colnames(df_quant), ncol = 3, label_size = 9.5, vjust = .8)
 
 ```
 
@@ -299,11 +309,17 @@ Linear regression using `lm`
 Perform a simple linear regression with `diameter` as the covariate and `height` as the response. Interpret the model coefficients and their significance values. 
 
 
-```R
-... # Insert your code here
+```{R}
+# assigning 'x' and 'y'
+x = df$diameter
+y = df$height
+
+# creating the model and summarizing
+model <- lm(y ~ x)
+summary(model)
 ```
 
-
+The model's $\beta_0$ coefficient represents the intercept and has a value of -0.003803. This means that the y-intercept of the simple linear regression model is in the negatives. The model's $\beta_1$ coefficient represents the slope and has a value of 0.351376. The p-value is very statistically significant therefore we reject the null hypothesis and accept the alternative hypothesis. The R-squared value, on the other hand, is not very large and is not significant.
 
 ---
 
@@ -312,11 +328,13 @@ Perform a simple linear regression with `diameter` as the covariate and `height`
 Make a scatterplot of `height` vs `diameter` and plot the regression line in `color="red"`. You can use the base `plot()` function in R for this. Is the linear model an appropriate fit for this relationship? Explain. 
 
 
-```R
-... # Insert your code here
+```{R}
+# creating scatterplot using 'plot()' function
+plot(x, y, xlab="height", ylab="diameter", pch=20)
+lines(x, fitted(lm(y ~ x)), col="red")
 ```
 
-
+Yes this linear model is an appropriate fit for this relationship because it successfully minimizes the distance from each point to the trend line. In addition to this, the p-value is statistically significant, as mentioned above.
 
 ---
 
@@ -324,7 +342,7 @@ Make a scatterplot of `height` vs `diameter` and plot the regression line in `co
 
 Suppose we have collected observations for "new" abalones with `new_diameter` values given below. What is the expected value of their `height` based on your model above? Plot these new observations along with your predictions in your plot from earlier using `color="violet"`
 
-```R
+```{R}
 
 new_diameters <- c(
   0.15218946,
@@ -339,10 +357,21 @@ new_diameters <- c(
   0.01209518
 )
 
+# creating new variables
+new_x <- data.frame(x = new_diameters)
+new_y <- predict(model, new_x)
 
-... # Insert your code here. 
+# plotting graph and adding predicted points
+plot(x, y, xlab="height", ylab="diameter", pch=20)
+lines(x, fitted(lm(y ~ x)), col="red")
+points(new_x %>% unlist(), new_y, col="violet", pch=19)
 ```
 
+The expected value of the "new" abalones height based on the model above is as follows:
+
+```{R}
+new_y
+```
 
 
 
