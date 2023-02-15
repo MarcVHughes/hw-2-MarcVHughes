@@ -95,14 +95,15 @@ Plot histograms of all the quantitative variables in a **single plot** [^footnot
 ```{R}
 new_df <-
   df %>%
-  select(!sex) %>%
   # using gather function to gather all variables into one column
-  gather(cols, value)
+  pivot_longer(!sex,
+               names_to = "Variables",
+               values_to = "Values")
   
 plt <- 
-  ggplot(new_df, aes(x = value)) +
+  ggplot(new_df, aes(x = Values)) +
   geom_histogram() +
-  facet_wrap(~cols, scales="free")
+  facet_wrap(~Variables, scales="free")
 plt
 ```
 
@@ -142,6 +143,7 @@ Create a scatter plot of `length` and `diameter`, and modify the shape and color
 ```{R}
 scatter_plt <- 
   ggplot(df, aes(x=length, y=diameter)) +
+  # specifying the 'shape' to make the plot more readable
   geom_point(aes(shape=sex, color=sex, size=shell_weight))
 scatter_plt
 ```
@@ -285,7 +287,7 @@ plot1 <- map2(df_quant, df_y, ~ ggplot(df) +
   labs(x = "rings", y = " "))
 
 # using 'plot_grid()' to put all plots into one grid
-cowplot::plot_grid(plotlist = plot1, labels = colnames(df_quant), ncol = 3, label_size = 9.5, vjust = .8)
+cowplot::plot_grid(plotlist = plot1, labels = colnames(df_quant), ncol = 3, label_size = 9.5, vjust = .9, hjust = 0)
 
 ```
 
